@@ -1,6 +1,6 @@
 import FreeSimpleGUI as fsg
 from chat_view import ChatView
-from chat_message import ChatMessage
+from model.chat_message import ChatMessage
 import config
 
 def format_messages(messages=[]):

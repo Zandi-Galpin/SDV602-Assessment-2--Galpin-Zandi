@@ -1,7 +1,7 @@
 import FreeSimpleGUI as sg
 
-from login_view import LoginView
-from register_view import RegisterView
+from view.login_view import LoginView
+from view.register_view import RegisterView
 from user import User
 
 
@@ -26,27 +26,7 @@ def register():
 
 
 def login():
-    view = LoginView()
 
-    while True:
-        event, values = view.read()
-
-        if event in (sg.WIN_CLOSED, "Cancel"):
-            view.close()
-            return
-
-        if event == "Register":
-            view.close()
-            register()
-            view = LoginView()
-
-        if event == "Login":
-            if User.login(values["-USERNAME-"], values["-PASSWORD-"]):
-                view.show_message("Login successful")
-                view.close()
-                return
-
-            view.show_error("Login failed")
 
 
 if __name__ == "__main__":
