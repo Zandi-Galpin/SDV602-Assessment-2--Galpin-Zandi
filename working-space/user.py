@@ -1,71 +1,58 @@
+from database_manager import DatabaseManager
 import bcrypt
-from database_manager import DatabaseManager, DatabaseError
 import config
-
-
-class AuthResult:
-    """sends the outcome of a login/register attempt to the UI layer"""
-
-    def __init__(self, success, outcome, message, user=None):
-        self.success = success
-        self.outcome = outcome  #'success', 'no_user', 'wrong_password', 'connection_error', 'duplicate_username'
-        self.message = message
-        self.user = user
 
 
 class User:
 
-    def __init__(self, username, password_hash):
-        self.username = username
-        self.password_hash = password_hash
+    db = DatabaseManager.getInstance()
 
-    @staticmethod
-    def _hash_password(password):
-        return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+    def __init__(self, name, password):
+        # self.id = id
+        self.name = name
 
-    @staticmethod
-    def _verify_password(password, stored_hash):
-        if isinstance(stored_hash, str):
-            stored_hash = stored_hash.encode('utf-8')
-        return bcrypt.checkpw(password.encode('utf-8'), stored_hash)
+        try:
+            password_encoded = password.encode("utf-8")
+            # hash password with bcrypt
+            salt = bcrypt.gensalt()
+            password_hash = bcrypt.hashpw(password_encoded, salt)
+
+            self.password_hash = password_hash
+        except Exception as e:
+            print(f"Something went wrong: {e}")
+
+
+        self.db = DatabaseManager.getInstance()
 
     @classmethod
-    def register(cls, username, password):
+    def login(cls, username, password):    
+        if not type(password) == str or not password:
+            raise Exception("Invalid Password")
+
         try:
-            db = DatabaseManager.getInstance()
+            # get user by name
+            stored_user = cls.db.find_one_by_name(config.USER_COLLECTION, username)
+            if not stored_user:
+                raise Exception("Failed to find user")
+            
+            # compare pw
+            password_encoded = password.encode("utf-8")
+            # print(stored_user["password"])
+            result = bcrypt.checkpw(password_encoded, stored_user["password"])
 
-            if db.find_one_by_username(config.USERS_COLLECTION, username):
-                return AuthResult(False, 'duplicate_username',
-                                   f"Username '{username}' is already taken.")
+            if not result:
+                raise Exception("Failed to login: Incorrect Password")
 
-            password_hash = cls._hash_password(password)
-            db.insert_one(config.USERS_COLLECTION, {
-                "username": username,
-                "password_hash": password_hash,
-            })
-
-            return AuthResult(True, 'registered', "Account created successfully.",
-                               user=cls(username, password_hash))
-
-        except DatabaseError:
-            return AuthResult(False, 'connection_error',
-                               "Could not reach the database. Please try again later.")
-
-    @classmethod
-    def authenticate(cls, username, password):
-        try:
-            db = DatabaseManager.getInstance()
-            document = db.find_one_by_username(config.USERS_COLLECTION, username)
-
-            if document is None:
-                return AuthResult(False, 'no_user', "No account found with that username.")
-
-            if not cls._verify_password(password, document["password_hash"]):
-                return AuthResult(False, 'wrong_password', "Incorrect password.")
-
-            return AuthResult(True, 'success', "Logged in successfully.",
-                               user=cls(username, document["password_hash"]))
-
-        except DatabaseError:
-            return AuthResult(False, 'connection_error',
-                               "Could not reach the database. Please try again later.")
+            # create and return user
+            return cls(username, password)
+        except Exception as e:
+            print(f"Something went wrong: {e}")
+    
+    def save(self):
+        if self.db.find_one_by_name(config.USER_COLLECTION, self.name):
+            raise Exception("Username already taken")
+        
+        return self.db.insert_one(config.USER_COLLECTION, {
+            "name": self.name,
+            "password": self.password_hash
+        })
