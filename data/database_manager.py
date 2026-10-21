@@ -1,6 +1,6 @@
 from pymongo import MongoClient
 from bson.objectid import ObjectId
-from working_space.config import config 
+import config 
 
 
 class DatabaseManager:

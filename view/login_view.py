@@ -18,28 +18,8 @@ class LoginView:
 
         self.window = sg.Window("Login", self.layout)
 
-    def run(self):
-        while True:
-            event, values = self.read()
-
-            if event in (sg.WIN_CLOSED, "Cancel"):
-                self.close()
-                return
-
-            if event == "Register":
-                # self.close()
-                # register()
-                # view = LoginView()
-                pass
-
-            if event == "Login":
-                if User.login(values["-USERNAME-"], values["-PASSWORD-"]):
-                    self.show_message("Login successful")
-                    self.close()
-                    return
-
-                self.show_error("Login failed")
-
+    def read(self):
+        return self.window.read()
 
     def close(self):
         self.window.close()
@@ -55,4 +35,3 @@ class LoginView:
 
     def show_message(self, message):
         sg.popup(message)
-

@@ -1,7 +1,7 @@
 
 from data.database_manager import DatabaseManager
 import bcrypt
-from working_space.config import config 
+import config 
 from model.user import User
 
 class UserRepository:
@@ -47,5 +47,5 @@ class UserRepository:
         
         return self.db.insert_one(config.USER_COLLECTION, {
             "name": username,
-            "password": self.password_hash
+            "password": password_hash
         })
