@@ -6,9 +6,9 @@ import FreeSimpleGUI as sg
 
 
 class LoginController:
-    def __init__(self, user_repository):
+    def __init__(self, user_repository, view=None):
         self.user_repository = user_repository
-        self.view = LoginView()
+        self.view = view if view is not None else LoginView()
 
     def run(self):
         while True:

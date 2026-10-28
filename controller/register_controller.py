@@ -5,9 +5,9 @@ import FreeSimpleGUI as sg
 
 
 class RegisterController:
-    def __init__(self, user_repository):
+    def __init__(self, user_repository, view=None):
         self.user_repository = user_repository
-        self.view = RegisterView()
+        self.view = view if view is not None else RegisterView()
 
     def run(self):
         while True:

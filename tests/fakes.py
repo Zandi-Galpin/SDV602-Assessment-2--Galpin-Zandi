@@ -1,0 +1,44 @@
+"""used by tests so no window or real server is needed."""
+from data.database_manager import DatabaseError
+
+
+class FakeView:
+    """gives a controller a list of (event, values) pairs and
+    shows what the controller tries to show the user."""
+
+    def __init__(self, events):
+        self._events = list(events)
+        self.errors = []
+        self.messages = []
+        self.closed = False
+
+    def read(self, timeout=None):
+        if not self._events:
+            #real loop waits forever; fail test instead.
+            raise RuntimeError("FakeView ran out of scripted events")
+        return self._events.pop(0)
+
+    def close(self):
+        self.closed = True
+
+    def hide(self):
+        pass
+
+    def un_hide(self):
+        pass
+
+    def show_error(self, message):
+        self.errors.append(str(message))
+
+    def show_message(self, message):
+        self.messages.append(message)
+
+
+class BrokenDatabase:
+    """A database that is never reachable."""
+
+    def find_one_by_name(self, collection, name):
+        raise DatabaseError("outage")
+
+    def insert_one(self, collection, document):
+        raise DatabaseError("outage")
