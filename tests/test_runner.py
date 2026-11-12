@@ -17,6 +17,7 @@ from controller.register_controller import RegisterController
 from data.database_manager import DatabaseManager
 from data.user_repository import AuthError, UserRepository
 from tests.fakes import BrokenDatabase, FakeView
+from tests import test_local_mode
 
 TEST_DB_NAME = "SDV602_test_database"
 EMPTY_MSG = "Please enter both a username and password."
@@ -197,6 +198,7 @@ ALL_TESTS = [
     test_that_the_cli_rejects_bad_input,
 ]
 
+ALL_TESTS += test_local_mode.ALL_TESTS
 
 def run_all():
     """Runs each test, catching any problems per test so a bad test doesnt
