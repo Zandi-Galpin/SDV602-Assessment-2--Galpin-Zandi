@@ -17,6 +17,7 @@ from controller.login_controller import LoginController
 from data.database_manager import DatabaseError
 from data.message_repository import MessageRepository
 from data.user_repository import UserRepository
+from controller.des_controller import DesController
 
 
 class App:
@@ -51,7 +52,7 @@ def build_parser():
 
 
 def run_local(args):
-    print("Local mode is not built yet.")
+    DesController().run(args.file)
     return 0
 
 

@@ -27,3 +27,12 @@ Made model/explorer.py which managed the state of a single DES. It keeps track o
 ## 12/11/2026
 Made tests/test_local_mode.py which has all the test functions for local mode, covers tests for everything that was added with csv_loader.py, data_source.py, view_window.py and explorer.py.
 these tests were imported into test_runner.py so all tests can be run at once. 
+
+## 13/11/2026
+made zoom and pan for x only and y changes to fit the data when zoomed. This is because zooming into certain places could leave the user in a blank part of the graph and they could get lost. This stops that from ever happening.
+
+Added local des window, controller and chart drawing. 
+view/chart_drawing.py draws the charts and the placeholder on a matplotlib figure.
+view/des_view.py is a freesimplegui window with the embedded chart and zoom, pan, reset, change source and append source controls, with a status line and description.
+controller/des_controller turns button presses into actions for the explorer. each DataError becomes a message instead of a crash, including bad files.
+tests/test_des added 22 more tests for the des using a fake window.

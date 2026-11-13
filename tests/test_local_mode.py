@@ -220,7 +220,7 @@ def test_that_set_source_for_explorer_builds_chart_and_description():
 
 def test_that_explorer_actions_before_loading_are_refused():
     explorer = Explorer()
-    for action in (explorer.zoom_in, explorer.zoom_out, explorer.pan, explorer.reset_view, lambda: explorer.append_source(sample_source())):
+    for action in (explorer.zoom_in, explorer.zoom_out, lambda: explorer.pan(0.1), explorer.reset_view, lambda: explorer.append_source(sample_source())):
         expect_data_error(action, "Load a data source first")
 
 def test_that_explorer_zoom_and_pan_changes_the_view():
@@ -233,7 +233,7 @@ def test_that_explorer_zoom_and_pan_changes_the_view():
     explorer.zoom_in()
     explorer.zoom_in()
     before = explorer.view.limits()
-    explorer.pan(0.1, 0.1)
+    explorer.pan(0.1)
     assert explorer.view.limits() != before
 
 def test_explorer_change_source_replaces_data_and_resets_view():
@@ -274,6 +274,102 @@ def test_that_an_explorer_failed_append_keeps_same_state():
     assert len(explorer.source.rows) == 4
     assert explorer.view.limits() == limits, "view changed on failed append"
 
+def test_that_zoom_can_leave_one_axis_alone():
+    view = ViewWindow(0, 100, 0, 100)
+    view.zoom(2, zoom_y=False)
+    assert approx(view.x_min, 25) and approx(view.x_max, 75), view.limits()
+    assert (view.y_min, view.y_max) == (0, 100), view.limits()
+
+def test_that_zooming_in_then_out_returns_to_full_view():
+    for count in (1, 2, 3, 4, 8):
+        view = ViewWindow.fitting(0, 27, 6720, 15680)
+        for _ in range(count):
+            view.zoom(1.5, zoom_y=False)
+        for _ in range(count):
+            view.zoom(1 / 1.5, zoom_y=False)
+        assert (view.x_min, view.x_max) == (view.full[0], view.full[1]), f"after {count} zoomy in and outies: {view.limits()}"
+
+def test_view_set_y_changes_only_y():
+    view = ViewWindow(0, 100, 0, 100)
+    view.set_y(40, 60)
+    assert view.limits() == (0, 100, 40, 60), view.limits()
+    try:
+        view.set_y(5, 5)
+    except ValueError:
+        return
+    raise AssertionError("empty y range accepted")
+
+def two_cluster_source():
+    """Eight labels, first four are near 100, the last four near 10."""
+    rows = [{"P": str(i), "V": str(100 + i if i <= 4 else 6 + i)} for i in range(1, 9)]
+    return DataSource("clusters.csv", ["P", "V"], rows)
+
+def test_that_explorer_zoom_fits_y_to_the_data():
+    explorer = Explorer()
+    explorer.set_source(two_cluster_source())
+    for _ in range(3):
+        explorer.zoom_in()
+    for _ in range(10):
+        explorer.pan(-1) #all the way to the left
+    y_min, y_max = explorer.view.y_min, explorer.view.y_max
+    assert y_min > 50 and y_max < 110, f"y range {y_min}..{y_max} should only cover the values near 100"
+    for _ in range(10):
+        explorer.pan(1)#all the way to the right
+    y_min, y_max = explorer.view.y_min, explorer.view.y_max
+    assert y_max < 50, f"y range {y_min}..{y_max} should only cover around 10"
+
+def line_height_at(points, x):
+    """Height of a series line at x, or None if x is outside the line."""
+    for (x0, y0), (x1, y1) in zip(points, points[1:]):
+        if x0 <= x <= x1:
+            return y0 + (y1 - y0) * (x - x0) / (x1 - x0)
+    return None
+
+def expected_y_range(explorer):
+    """Work out what y range the visible lines need. every
+    point inside the view plus the lines height at each edge."""
+    view = explorer.view
+    values = []
+    for points in explorer.chart.series.values():
+        values += [y for x, y in points if view.x_min <= x <= view.x_max]
+        for edge in (view.x_min, view.x_max):
+            height = line_height_at(points, edge)
+            if height is not None:
+                values.append(height)
+    return ViewWindow.padded(min(values), max(values))
+
+def check_y_fits(explorer, when):
+    low, high = expected_y_range(explorer)
+    view = explorer.view
+    assert approx(view.y_min, low) and approx(view.y_max, high), \
+        f"{when}: y range {view.y_min:.2f}..{view.y_max:.2f}, " \
+        f"expected {low:.2f}..{high:.2f}"
+
+def test_explorer_y_range_fits_visible_lines_at_every_step():
+    """Includes zooms where the view sits between two points."""
+    explorer = Explorer()
+    explorer.set_source(two_cluster_source())
+    for step in range(8):
+        explorer.zoom_in()
+        check_y_fits(explorer, f"zoom in {step + 1}")
+    explorer.pan(-0.7)
+    check_y_fits(explorer, "pan left")
+    explorer.pan(2)
+    check_y_fits(explorer, "pan right")
+    for step in range(8):
+        explorer.zoom_out()
+        check_y_fits(explorer, f"zoom out {step + 1}")
+
+def test_explorer_zoom_out_gives_the_full_view():
+    explorer = Explorer()
+    explorer.set_source(two_cluster_source())
+    for _ in range(4):
+        explorer.zoom_in()
+    for _ in range(4):
+        explorer.zoom_out()
+    assert explorer.view.is_full_view(), explorer.view.limits()
+
+
 ALL_TESTS = [
     test_load_csv_reads_rows_and_columns,
     test_load_csv_handles_bom_and_spaces,
@@ -311,4 +407,10 @@ ALL_TESTS = [
     test_explorer_failed_change_keeps_old_data,
     test_that_append_for_explorer_extends_chart_and_resets_view,
     test_that_an_explorer_failed_append_keeps_same_state,
+    test_that_zoom_can_leave_one_axis_alone, 
+    test_that_zooming_in_then_out_returns_to_full_view, 
+    test_view_set_y_changes_only_y, 
+    test_that_explorer_zoom_fits_y_to_the_data, 
+    test_explorer_y_range_fits_visible_lines_at_every_step, 
+    test_explorer_zoom_out_gives_the_full_view
 ]
