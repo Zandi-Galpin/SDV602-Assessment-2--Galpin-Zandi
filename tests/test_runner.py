@@ -14,21 +14,14 @@ import config
 from app import build_parser
 from controller.login_controller import LoginController
 from controller.register_controller import RegisterController
-from data.database_manager import DatabaseManager
 from data.user_repository import AuthError, UserRepository
 from tests.fakes import BrokenDatabase, FakeView
 from tests import test_local_mode
 from tests import test_des, test_local_mode
+from tests.helpers import TEST_DB_NAME, reset_database
+from tests import test_sessions
 
-TEST_DB_NAME = "SDV602_test_database"
 EMPTY_MSG = "Please enter both a username and password."
-
-
-def reset_database():
-    """Wipe the test database. cant run against anything else."""
-    if config.DB_NAME != TEST_DB_NAME:
-        raise RuntimeError("cant wipe a non test database")
-    DatabaseManager.getInstance().client.drop_database(config.DB_NAME)
 
 
 def fresh_repo():
@@ -199,7 +192,7 @@ ALL_TESTS = [
     test_that_the_cli_rejects_bad_input,
 ]
 
-ALL_TESTS += test_local_mode.ALL_TESTS + test_des.ALL_TESTS
+ALL_TESTS += (test_local_mode.ALL_TESTS + test_des.ALL_TESTS + test_sessions.ALL_TESTS)
 
 def run_all():
     """Runs each test, catching any problems per test so a bad test doesnt

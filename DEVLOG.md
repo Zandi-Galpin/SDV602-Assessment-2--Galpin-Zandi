@@ -36,3 +36,13 @@ view/chart_drawing.py draws the charts and the placeholder on a matplotlib figur
 view/des_view.py is a freesimplegui window with the embedded chart and zoom, pan, reset, change source and append source controls, with a status line and description.
 controller/des_controller turns button presses into actions for the explorer. each DataError becomes a message instead of a crash, including bad files.
 tests/test_des added 22 more tests for the des using a fake window.
+
+Moved test database helper to tests/helpers.py. made the BrokenDatabase always fail. 
+Added sessions model, sessions repository, session management screen.
+DatabaseManager has find_many, delete_one_by_id, invalid ids are treated as not found. 
+Session model and SessionRepository, names are trimmed, have to be unique for each owner (cant have 2 sessions named the same thing).
+Sessions DES has create, join, refresh, delete, logout buttons.
+new sessions can be marked as private.
+jdatabase failures lead to a plain message.
+app.py remote goes to login screen, then sessions. logout returns back to login. join opens the global chat unless a DES exists which it doesnt yet.
+added 29 more tests for all of this.

@@ -6,5 +6,6 @@ DB_NAME = "SDV602_assessment_2_database"
 DATA_SOURCES_COLLECTION = "data_sources"
 CHAT_MESSAGES_COLLECTION = "chat_messages"
 USER_COLLECTION = 'users'
+SESSIONS_COLLECTION = "sessions"
 
 POLL_RATE=1000

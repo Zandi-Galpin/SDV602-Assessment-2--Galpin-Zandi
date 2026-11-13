@@ -35,10 +35,9 @@ class FakeView:
 
 
 class BrokenDatabase:
-    """A database that is never reachable."""
+    """A database that is always unreachable. every operation fails."""
 
-    def find_one_by_name(self, collection, name):
-        raise DatabaseError("outage")
-
-    def insert_one(self, collection, document):
-        raise DatabaseError("outage")
+    def __getattr__(self, name):
+        def fail(*args, **kwargs):
+            raise DatabaseError("simulated outage")
+        return fail

@@ -18,7 +18,8 @@ from data.database_manager import DatabaseError
 from data.message_repository import MessageRepository
 from data.user_repository import UserRepository
 from controller.des_controller import DesController
-
+from controller.session_controller import SessionController
+from data.session_repository import SessionRepository
 
 class App:
     """Remote mode: login, then chat (sessions replace chat later)."""
@@ -26,12 +27,22 @@ class App:
     def __init__(self):
         self.user_repository = UserRepository()
         self.message_repository = MessageRepository()
+        self.session_repository = SessionRepository()
 
     def run(self):
-        user = LoginController(self.user_repository).run()
+        while True:
+            user = LoginController(self.user_repository).run()
+            if not user:
+                break
 
-        if user:
-            ChatController(user.name, self.message_repository).run()
+            result = SessionController(
+                user, self.session_repository, self.open_session).run()
+            if result != "logout":
+                break
+
+    def open_session(self, session, user):
+        #Placeholder until the remote DES exists
+        ChatController(user.name, self.message_repository).run()
 
 
 def build_parser():
