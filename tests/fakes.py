@@ -41,3 +41,22 @@ class BrokenDatabase:
         def fail(*args, **kwargs):
             raise DatabaseError("simulated outage")
         return fail
+
+class SwitchableDatabase:
+    """Wraps a working database that can be switched off then on to test
+    what happens when the connection randomly goes away then comes back"""
+
+    def __init__(self, database):
+        self._database = database
+        self.down = False
+
+    def __getattr__(self, name):
+        attribute = getattr(self._database, name)
+        if not callable(attribute):
+            return attribute
+
+        def call(*args, **kwargs):
+            if self.down:
+                raise DatabaseError("simulated outage")
+            return attribute(*args, **kwargs)
+        return call

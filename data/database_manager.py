@@ -56,10 +56,17 @@ class DatabaseManager:
         except PyMongoError as e:
             raise DatabaseError(f"Could not read from {collection}") from e
 
-    def find_many(self, collection, query=None):
-        """A list of every document matching the query (all of them if no query)."""
+    def find_many(self, collection, query=None, sort=None, limit=0):
+        """A list of every document matching the query (all of them if no query). 
+        sort is a list of (field, direction)s
+        direction 1 for ascending and -1 for descending. limit of 0 means no limit."""
         try:
-            return list(self.get_collection(collection).find(query or {}))
+            cursor = self.get_collection(collection).find(query or {})
+            if sort:
+                cursor = cursor.sort(sort)
+            if limit:
+                cursor = cursor.limit(limit)
+            return list(cursor)
         except PyMongoError as e:
             raise DatabaseError(f"Could not read from {collection}") from e
 
@@ -72,6 +79,14 @@ class DatabaseManager:
             return 0
         try:
             return self.get_collection(collection).delete_one(
+                query).deleted_count
+        except PyMongoError as e:
+            raise DatabaseError(f"Could not delete from {collection}") from e
+
+    def delete_many(self, collection, query):
+        """Delete every document matching the query. Returns how many."""
+        try:
+            return self.get_collection(collection).delete_many(
                 query).deleted_count
         except PyMongoError as e:
             raise DatabaseError(f"Could not delete from {collection}") from e

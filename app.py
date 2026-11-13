@@ -41,8 +41,7 @@ class App:
                 break
 
     def open_session(self, session, user):
-        #Placeholder until the remote DES exists
-        ChatController(user.name, self.message_repository).run()
+        ChatController(user.name, self.message_repository, session).run()
 
 
 def build_parser():

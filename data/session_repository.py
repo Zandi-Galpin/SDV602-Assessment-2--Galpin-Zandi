@@ -57,6 +57,7 @@ class SessionRepository:
         """Delete a session. Only its owner can."""
         deleted = self.db.delete_one_by_id(config.SESSIONS_COLLECTION, session_id, owner=username)
         if deleted:
+            self.db.delete_many(config.CHAT_MESSAGES_COLLECTION, {"session_id": session_id})
             return
         if self.find(session_id) is None:
             raise SessionError("That session no longer exists.")

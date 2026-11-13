@@ -1,8 +1,6 @@
 ## 19/10/2026
-## 19/10/2026
 Initial commit. Imported initial files from practice. Set up virtual environment.
 
-## 21/10/2026
 ## 21/10/2026
 Updated initial files to session 22 files. This is the proper starting point. Then fixed an issues in create_user using the wrong variable. Wrapped pymongo errors in DatabaseError, added a connection timeout, and added AuthError with specific error messages for login/registration with validation. 
 
@@ -46,3 +44,12 @@ new sessions can be marked as private.
 jdatabase failures lead to a plain message.
 app.py remote goes to login screen, then sessions. logout returns back to login. join opens the global chat unless a DES exists which it doesnt yet.
 added 29 more tests for all of this.
+
+## 14/11/2026
+Its 2am. my head hurts.
+Added per session chat which handles outages and cascade deletion.
+added things to make this work as below
+MessageRepository: messages belong to a session. blank messages not allowed. over 500 char messages not allowed. 
+ChatFeed: windowless chat logic that the remote DES can reuse.
+ChatController: redraws only when changes happen. Shows status during database loss of access and clears it when access is back. Keeps the users text in the text box if sending fails.
+added more tests and a switchable "database" that can be turned on and off.
