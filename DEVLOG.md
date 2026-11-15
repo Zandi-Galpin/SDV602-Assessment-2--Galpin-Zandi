@@ -58,3 +58,30 @@ added more tests and a switchable "database" that can be turned on and off.
 Multiple DES need to be running in parallel. But FreeSimpleGUI isnt thread safe. Because of this, one loop on the main thread runs every window (WindowManager.) Slower work runs on "worker" thread. Workers never do anything with widgets. Workers post their result back to the window (write_event_value) and the main thread applies it. The session screen now doesnt block, so it can be used while DES windows are open.
 
 fixed some things to be compliant with pep8 (automatically). Won't go through the rest manually due to time constraints.
+
+updated readme.
+
+## reflection
+
+I started from the starting files provided and ran them.Registering crashed. Also logging in with an empty password crashed the app, and nothing handled the database being down.
+I fixed these first before moving on.
+
+I passed the views and the database into the controllers and repositories instead of creating them inside, so a fake window with scripted button presses could work the app. That made the headless test mode work easily, and it covers things special things that wouldnt be easy to test myself, like the database going down and coming back.
+
+Several times I changed the code to see whether a test would fail. a lot of my first tests still passed, so they weren't testing what I thought. For example, repeated zooming in and out left the view a little bit not fully zoomed out because of rounding, and only a test written for that case found it.
+
+The zoom looked fine in the tests, but running it and zooming above or below the lines too far would show an empty chart. I changed it to zoom along x only and fit y to the data so that data is always visible.
+
+**hardest part**
+i needed multiple DES windows in parallel, but FreeSimpleGUI isnt thread safe. I used one loop on the main thread to run every window, with worker threads for slow work that report back as events. Several windows can be busy at once without freezing each other.
+
+**What I would do differently.**
+- Decide the module boundaries and the test runner straight away. I added some pieces (the status handling, the view injection) after finding I needed them which meant going back to change files that already worked.
+
+- Use database indexes (for example making usernames unique) instead of only checking in code. Right now 2 people registering the same name at the same time could still get through.
+
+- Look at push based updates instead of checking every second. 
+
+**What I took from it.** 
+Python let me change things quickly, but nothing told me when I'd made a mistake  until that line ran. So the tests did the job a
+compiler would have done in C#, so C# would have been faster for development.
