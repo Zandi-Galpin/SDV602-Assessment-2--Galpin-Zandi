@@ -57,7 +57,7 @@ class DatabaseManager:
             raise DatabaseError(f"Could not read from {collection}") from e
 
     def find_many(self, collection, query=None, sort=None, limit=0):
-        """A list of every document matching the query (all of them if no query). 
+        """A list of every document matching the query (all of them if no query).
         sort is a list of (field, direction)s
         direction 1 for ascending and -1 for descending. limit of 0 means no limit."""
         try:

@@ -11,10 +11,13 @@ class RegisterView:
 
         self.layout = [
             [sg.Text("Username"), sg.InputText(key="-USERNAME-")],
-            [sg.Text("Password"), sg.InputText(password_char="*", key="-PASSWORD-")],
-            [sg.Text("Confirm Password"), sg.InputText(password_char="*", key="-CONFIRM_PASSWORD-")],
+            [sg.Text("Password"), sg.InputText(
+                password_char="*", key="-PASSWORD-")],
+            [sg.Text("Confirm Password"), sg.InputText(
+                password_char="*", key="-CONFIRM_PASSWORD-")],
             [sg.Button("Register", bind_return_key=True), sg.Button("Cancel")],
-            [sg.Text("Already have an account? "), sg.Text("Login", text_color="blue", enable_events=True)],
+            [sg.Text("Already have an account? "), sg.Text(
+                "Login", text_color="blue", enable_events=True)],
         ]
 
         self.window = sg.Window("Register", self.layout)

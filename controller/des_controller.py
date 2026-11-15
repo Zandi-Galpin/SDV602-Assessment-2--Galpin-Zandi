@@ -15,7 +15,7 @@ class DesController:
     def __init__(self, explorer=None, view=None, loader=load_csv):
         self.explorer = explorer if explorer is not None else Explorer()
         if view is None:
-            #imported here so it doesnt pull in the GUI libraries.
+            # imported here so it doesnt pull in the GUI libraries.
             from view.des_view import DesView
             view = DesView()
         self.view = view
@@ -67,7 +67,7 @@ class DesController:
             self.view.show_error(str(e))
 
     def _change_source(self, path):
-        if not path:  #if the user closed the file dialog
+        if not path:  # if the user closed the file dialog
             return
         source = self.loader(path)
         self.explorer.set_source(source)

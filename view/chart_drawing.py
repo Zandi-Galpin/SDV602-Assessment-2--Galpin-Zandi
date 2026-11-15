@@ -58,7 +58,8 @@ def draw_placeholder(figure, message="No data loaded"):
     figure.clear()
     axes = figure.add_subplot(111)
 
-    axes.plot(range(len(PLACEHOLDER_Y)), PLACEHOLDER_Y, color="lightgray", linestyle="--", marker="o")
+    axes.plot(range(len(PLACEHOLDER_Y)), PLACEHOLDER_Y,
+              color="lightgray", linestyle="--", marker="o")
     axes.set_xticks([])
     axes.set_yticks([])
     axes.text(0.5, 0.5, message, transform=axes.transAxes, ha="center",

@@ -2,6 +2,7 @@ import FreeSimpleGUI as sg
 
 HEADINGS = ["Name", "Owner", "Visibility"]
 
+
 class SessionView:
     """session management window. It shows what it is told and reports button presses"""
 

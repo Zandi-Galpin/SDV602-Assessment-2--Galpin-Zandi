@@ -14,7 +14,7 @@ class FakeView:
 
     def read(self, timeout=None):
         if not self._events:
-            #real loop waits forever; fail test instead.
+            # real loop waits forever; fail test instead.
             raise RuntimeError("FakeView ran out of scripted events")
         return self._events.pop(0)
 
@@ -41,6 +41,7 @@ class BrokenDatabase:
         def fail(*args, **kwargs):
             raise DatabaseError("simulated outage")
         return fail
+
 
 class SwitchableDatabase:
     """Wraps a working database that can be switched off then on to test

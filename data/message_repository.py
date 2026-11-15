@@ -16,7 +16,6 @@ class MessageRepository:
     def __init__(self, db=None):
         self.db = db if db is not None else DatabaseManager.getInstance()
 
-
     def create_message(self, session_id, username, text):
         """Store a message in a sessions chat. The text is trimmed. blank
         or too long message is refused."""
@@ -24,9 +23,11 @@ class MessageRepository:
         if not text:
             raise ChatError("Type a message first.")
         if len(text) > MAX_MESSAGE_LENGTH:
-            raise ChatError(f"Messages can be {MAX_MESSAGE_LENGTH} characters max.")
+            raise ChatError(
+                f"Messages can be {MAX_MESSAGE_LENGTH} characters max.")
 
-        #stored as UTC so the order is right even if two machines have diff timezones
+        # stored as UTC so the order is right even if two machines have diff
+        # timezones
         return self.db.insert_one(config.CHAT_MESSAGES_COLLECTION, {
             "session_id": session_id,
             "username": username,
@@ -41,8 +42,10 @@ class MessageRepository:
             config.CHAT_MESSAGES_COLLECTION, {"session_id": session_id},
             sort=[("timestamp", -1), ("_id", -1)], limit=limit)
         documents.reverse()
-        return [ChatMessage(doc["username"], doc["text"], doc["timestamp"]) for doc in documents]
+        return [ChatMessage(doc["username"], doc["text"],
+                            doc["timestamp"]) for doc in documents]
 
     def delete_for_session(self, session_id):
         """Remove every message of a session. Returns how many."""
-        return self.db.delete_many(config.CHAT_MESSAGES_COLLECTION, {"session_id": session_id})
+        return self.db.delete_many(config.CHAT_MESSAGES_COLLECTION, {
+                                   "session_id": session_id})

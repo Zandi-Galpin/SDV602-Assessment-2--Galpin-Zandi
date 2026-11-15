@@ -4,6 +4,7 @@ from data.database_manager import DatabaseManager
 
 TEST_DB_NAME = "SDV602_test_database"
 
+
 def reset_database():
     """Wipe the test database. doesnt run against anything else."""
     if config.DB_NAME != TEST_DB_NAME:

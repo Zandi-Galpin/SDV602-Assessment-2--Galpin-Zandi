@@ -2,7 +2,7 @@
 
 Holds the data source, the chart built from it and the visible area.
 It doesnt do stuff with files or GUIs, a controller loads a DataSource,
-Then gives it in. each change builds the new state first and then 
+Then gives it in. each change builds the new state first and then
 replaces the old one, so failure leaves the screen as it was.
 Zoom and pan work on the x axis only. After each one the y axis is
 rescaled to fit the data that is visible, so the chart never zooms into an
@@ -10,6 +10,7 @@ empty gap between lines.
 """
 from model.data_source import DataError
 from model.view_window import ViewWindow
+
 
 class Explorer:
 
@@ -35,7 +36,8 @@ class Explorer:
         self.require_data()
         candidate = self.source.copy()
         added = candidate.append(other)
-        chart = candidate.chart_data(self.chart.x_key, self.chart.y_key, self.chart.series_key)
+        chart = candidate.chart_data(
+            self.chart.x_key, self.chart.y_key, self.chart.series_key)
         self.source = candidate
         self._show(chart)
         return added
@@ -67,7 +69,7 @@ class Explorer:
     def require_data(self):
         if not self.has_data():
             raise DataError("Load a data source first.")
-        
+
     def _show(self, chart):
         x_low, x_high = chart.x_extent()
         y_low, y_high = chart.y_extent()

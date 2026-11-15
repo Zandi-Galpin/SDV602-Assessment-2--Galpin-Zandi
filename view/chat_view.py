@@ -12,7 +12,8 @@ class ChatView:
         sg.theme("DarkBlue")
 
         self.layout = [
-            [sg.Multiline(size=(50, 20), disabled=True, autoscroll=True, key='-OUTPUT-')],
+            [sg.Multiline(size=(50, 20), disabled=True,
+                          autoscroll=True, key='-OUTPUT-')],
             [sg.Input(size=(40, 5), key='-CHAT-', do_not_clear=True)],
             [sg.Button('Send', bind_return_key=True)],
             [sg.Text("", key="-STATUS-", size=(50, 1), text_color="orange")],

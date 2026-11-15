@@ -23,6 +23,7 @@ from controller.remote_des_controller import RemoteDesController
 from controller.window_manager import WindowManager
 from data.data_source_repository import DataSourceRepository
 
+
 class App:
     """Remote mode: login, then chat (sessions replace chat later)."""
 
@@ -67,12 +68,14 @@ def build_parser():
     local = subparsers.add_parser("local", help="view CSV files from disk")
     local.add_argument("--file", help="CSV file to open on start")
 
-    remote = subparsers.add_parser("remote", help="log in and use the remote server")
+    remote = subparsers.add_parser(
+        "remote", help="log in and use the remote server")
     remote.add_argument("--uri", help="MongoDB connection string")
     remote.add_argument("--db", help="database name to use")
 
     test = subparsers.add_parser("test", help="run the headless tests")
-    test.add_argument("--fullinfo", action="store_true", help="list every passing test too")
+    test.add_argument("--fullinfo", action="store_true",
+                      help="list every passing test too")
 
     return parser
 

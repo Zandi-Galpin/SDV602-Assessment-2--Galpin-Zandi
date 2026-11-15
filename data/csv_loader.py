@@ -11,7 +11,7 @@ def load_csv(path):
     name = os.path.basename(path)
 
     try:
-        #utf-8-sig removes the byte order mark which some exports can add
+        # utf-8-sig removes the byte order mark which some exports can add
         with open(path, newline="", encoding="utf-8-sig") as file:
             reader = csv.DictReader(file)
             originals = reader.fieldnames
@@ -31,7 +31,8 @@ def load_csv(path):
         raise DataError(f"{name} has a header but no data rows.")
 
     columns = [column.strip() for column in originals]
-    #a row that is shorter than the header comes back with None, so it gets made blank
+    # a row that is shorter than the header comes back with None, so it gets
+    # made blank
     rows = [
         {column: (raw.get(original) or "").strip()
          for column, original in zip(columns, originals)}

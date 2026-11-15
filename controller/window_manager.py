@@ -8,7 +8,7 @@ class WindowManager:
 
     The first controller (the session screen) is the main one. when it
     finishes all the other windows are closed too. Each controller gives
-    handle(event, values), tick() (called about once each second), 
+    handle(event, values), tick() (called about once each second),
     is_finished() and a view with a window.
     """
 

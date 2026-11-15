@@ -21,7 +21,7 @@ from view.chat_view import format_messages
 TIMEOUT = ("__TIMEOUT__", {})
 
 
-#Test helpers
+# Test helpers
 
 def create_fresh_messages():
     reset_database()
@@ -30,6 +30,7 @@ def create_fresh_messages():
 
 def get_message_texts(messages):
     return [m.text for m in messages]
+
 
 def check_chat_error(func, expected_text):
     try:
@@ -42,6 +43,7 @@ def check_chat_error(func, expected_text):
 
 def create_send_event(text):
     return "Send", {"-CHAT-": text}
+
 
 class FakeChatView:
     """Pretends to be a chat window and records what happens.
@@ -95,7 +97,7 @@ def run_chat_test(repo, events, user="alex", session_id="s1", hooks=None):
     return controller, view
 
 
-#Message storage tests
+# Message storage tests
 
 def test_messages_are_saved_separately_for_each_session():
     repo = create_fresh_messages()
@@ -122,6 +124,7 @@ def test_saved_messages_include_all_their_details():
     assert message.username == "alex" and message.text == "hello"
     assert message.timestamp is not None
 
+
 def test_messages_are_trimmed_and_empty_messages_are_not_saved():
     repo = create_fresh_messages()
     repo.create_message("s1", "alex", "  hi there  ")
@@ -131,6 +134,8 @@ def test_messages_are_trimmed_and_empty_messages_are_not_saved():
             lambda: repo.create_message("s1", "alex", blank),
             "Type a message first.")
     assert len(repo.all("s1")) == 1, "An empty message was saved"
+
+
 def test_message_length_limit_is_enforced():
     repo = create_fresh_messages()
     too_long = "x" * (MAX_MESSAGE_LENGTH + 1)
@@ -139,6 +144,7 @@ def test_message_length_limit_is_enforced():
         f"Messages can be {MAX_MESSAGE_LENGTH} characters max.")
     repo.create_message("s1", "alex", "x" * MAX_MESSAGE_LENGTH)
     assert len(repo.all("s1")) == 1
+
 
 def test_only_the_most_recent_messages_are_shown_when_limited():
     repo = create_fresh_messages()
@@ -169,7 +175,7 @@ def test_database_errors_are_not_hidden():
         raise AssertionError("Database error was not reported")
 
 
-#Session deletion tests
+# Session deletion tests
 
 def test_deleting_a_session_also_deletes_its_messages():
     reset_database()
@@ -181,6 +187,7 @@ def test_deleting_a_session_also_deletes_its_messages():
     sessions.delete(first.id, "alex")
     assert messages.all(first.id) == [], "Deleted session messages remain"
     assert get_message_texts(messages.all(second.id)) == ["survivor"]
+
 
 def test_messages_are_kept_when_someone_else_tries_to_delete_a_session():
     reset_database()
@@ -195,13 +202,15 @@ def test_messages_are_kept_when_someone_else_tries_to_delete_a_session():
         raise AssertionError("Someone who does not own the session deleted it")
     assert get_message_texts(messages.all(session.id)) == ["keep me"]
 
-#Chat feed tests
+# Chat feed tests
+
 
 def test_first_chat_refresh_returns_an_empty_list_when_there_are_no_messages():
     feed = ChatFeed(create_fresh_messages(), "s1")
     first = feed.refresh()
     assert first == [], "The first refresh should return [] instead of None"
     assert feed.refresh() is None
+
 
 def test_chat_refresh_only_returns_messages_that_have_changed():
     repo = create_fresh_messages()
@@ -247,7 +256,7 @@ def test_chat_recovers_from_database_problems_without_losing_messages():
     assert get_message_texts(feed.refresh()) == ["before", "after"]
 
 
-#Chat message display tests
+# Chat message display tests
 
 def test_chat_messages_are_displayed_in_the_correct_format():
     assert format_messages([]) == ""
@@ -255,7 +264,7 @@ def test_chat_messages_are_displayed_in_the_correct_format():
     assert format_messages(log) == "alex: hi\npriya: yo\n"
 
 
-#Chat window tests
+# Chat window tests
 
 def test_chat_opens_with_the_correct_sessions_messages():
     repo = create_fresh_messages()
@@ -277,7 +286,8 @@ def test_chat_updates_only_when_new_messages_arrive():
 
 def test_chat_checks_for_new_messages_at_the_correct_interval():
     controller, view = run_chat_test(create_fresh_messages(), [TIMEOUT])
-    assert view.timeouts and all(t == config.POLL_RATE for t in view.timeouts), view.timeouts
+    assert view.timeouts and all(
+        t == config.POLL_RATE for t in view.timeouts), view.timeouts
 
 
 def test_sending_a_message_saves_and_displays_it_in_the_correct_session():
@@ -288,6 +298,7 @@ def test_sending_a_message_saves_and_displays_it_in_the_correct_session():
     assert repo.all("s2") == []
     assert view.cleared == 1 and view.errors == []
     assert view.updates[-1] == [("alex", "hello")], view.updates
+
 
 def test_sending_an_empty_message_does_nothing():
     repo = create_fresh_messages()
@@ -302,9 +313,11 @@ def test_long_messages_show_an_error_and_remain_in_the_input_box():
     repo = create_fresh_messages()
     controller, view = run_chat_test(
         repo, [create_send_event("x" * (MAX_MESSAGE_LENGTH + 1))])
-    assert view.errors == [f"Messages can be {MAX_MESSAGE_LENGTH} characters max."], view.errors
+    assert view.errors == [
+        f"Messages can be {MAX_MESSAGE_LENGTH} characters max."], view.errors
     assert view.cleared == 0, "The message was cleared even though it was not sent"
     assert repo.all("s1") == []
+
 
 def test_chat_shows_when_the_database_goes_offline_and_recovers():
     reset_database()

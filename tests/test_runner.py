@@ -16,7 +16,6 @@ from controller.login_controller import LoginController
 from controller.register_controller import RegisterController
 from data.user_repository import AuthError, UserRepository
 from tests.fakes import BrokenDatabase, FakeView
-from tests import test_local_mode
 from tests import test_des, test_local_mode
 from tests.helpers import TEST_DB_NAME, reset_database
 from tests import test_sessions
@@ -48,7 +47,7 @@ def expect_auth_error(func, expected_message):
     raise AssertionError(f"no AuthError raised: {expected_message}")
 
 
-#repository tests
+# repository tests
 
 def test_register_login_succeed():
     repo = fresh_repo()
@@ -62,24 +61,28 @@ def test_password_stored_as_hashed():
     repo.create_user("alice", "pw123")
     stored = repo.db.find_one_by_name(config.USER_COLLECTION, "alice")
     assert stored["password"] != b"pw123", "password stord as plain text"
-    assert bcrypt.checkpw(b"pw123", stored["password"]), "stored value is not a bcrypt hash of the password"
+    assert bcrypt.checkpw(
+        b"pw123", stored["password"]), "stored value is not a bcrypt hash of the password"
 
 
 def test_duplicate_usernames_are_rejected():
     repo = fresh_repo()
     repo.create_user("alice", "pw123")
-    expect_auth_error(lambda: repo.create_user("alice", "other"), "That username is already taken.")
+    expect_auth_error(lambda: repo.create_user(
+        "alice", "other"), "That username is already taken.")
 
 
 def test_login_for_unknown_user():
     repo = fresh_repo()
-    expect_auth_error(lambda: repo.login("nobody", "pw123"), "No account found with that username.")
+    expect_auth_error(lambda: repo.login("nobody", "pw123"),
+                      "No account found with that username.")
 
 
 def test_login_for_wrong_password():
     repo = fresh_repo()
     repo.create_user("alice", "pw123")
-    expect_auth_error(lambda: repo.login("alice", "wrong"), "Incorrect password.")
+    expect_auth_error(lambda: repo.login(
+        "alice", "wrong"), "Incorrect password.")
 
 
 def test_that_empty_credentials_are_rejected():
@@ -93,12 +96,14 @@ def test_that_empty_credentials_are_rejected():
 
 def test_too_long_passwords_are_rejected():
     repo = fresh_repo()
-    expect_auth_error(lambda: repo.create_user("alice", "x" * 100), "Password is too long (72 bytes maximum).")
+    expect_auth_error(lambda: repo.create_user(
+        "alice", "x" * 100), "Password is too long (72 bytes maximum).")
     repo.create_user("alice", "pw123")
-    expect_auth_error(lambda: repo.login("alice", "x" * 100),"Incorrect password.")
+    expect_auth_error(lambda: repo.login(
+        "alice", "x" * 100), "Incorrect password.")
 
 
-#controller tests (fake view)
+# controller tests (fake view)
 
 def test_login_controller_so_a_wrong_password_shows_message():
     repo = fresh_repo()
@@ -155,7 +160,7 @@ def test_register_controller_success_makes_user():
     assert repo.login("alice", "pw123").name == "alice"
 
 
-#command line tests
+# command line tests
 
 def test_that_the_cli_accepts_each_mode():
     parser = build_parser()
@@ -194,7 +199,9 @@ ALL_TESTS = [
     test_that_the_cli_rejects_bad_input,
 ]
 
-ALL_TESTS += (test_local_mode.ALL_TESTS + test_des.ALL_TESTS + test_sessions.ALL_TESTS + test_chat.ALL_TESTS + test_remote.ALL_TESTS)
+ALL_TESTS += (test_local_mode.ALL_TESTS + test_des.ALL_TESTS +
+              test_sessions.ALL_TESTS + test_chat.ALL_TESTS + test_remote.ALL_TESTS)
+
 
 def run_all():
     """Runs each test, catching any problems per test so a bad test doesnt
@@ -218,7 +225,7 @@ def run_all():
         try:
             reset_database()
         except Exception:
-            pass #the database may be unreachable
+            pass  # the database may be unreachable
     finally:
         config.DB_NAME = original_db
 

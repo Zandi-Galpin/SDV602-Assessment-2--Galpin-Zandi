@@ -8,6 +8,7 @@ from model.data_source import DataError, DataSource
 MAX_ROWS = 20000
 SESSION_GONE = "That session no longer exists."
 
+
 def _to_source(document):
     columns = document["columns"]
     rows = [dict(zip(columns, values)) for values in document["rows"]]
@@ -25,7 +26,8 @@ class DataSourceRepository:
         """Stores a data source for a session and make it the session's
         current source. Returns the new source id. Rows are kept as lists in column order"""
         if len(source.rows) > MAX_ROWS:
-            raise DataError(f"{source.name} has too many rows to upload (the limit is {MAX_ROWS:,}).")
+            raise DataError(
+                f"{source.name} has too many rows to upload (the limit is {MAX_ROWS:,}).")
 
         source_id = str(self.db.insert_one(config.DATA_SOURCES_COLLECTION, {
             "session_id": session_id,
@@ -40,7 +42,8 @@ class DataSourceRepository:
         matched = self.db.update_one_by_id(
             config.SESSIONS_COLLECTION, session_id, {"source_id": source_id})
         if matched == 0:
-            #The session was deleted while uploading: do not leave uploaded data behind
+            # The session was deleted while uploading: do not leave uploaded
+            # data behind
             self.db.delete_one_by_id(config.DATA_SOURCES_COLLECTION, source_id)
             raise SessionError(SESSION_GONE)
         return source_id
@@ -48,7 +51,8 @@ class DataSourceRepository:
     def current_id(self, session_id):
         """The id of the sessions current data source, or None if nothing
         has been uploaded yet. Raises SessionError if the session is gone."""
-        session = self.db.find_one_by_id(config.SESSIONS_COLLECTION, session_id)
+        session = self.db.find_one_by_id(
+            config.SESSIONS_COLLECTION, session_id)
         if session is None:
             raise SessionError(SESSION_GONE)
         return session.get("source_id")
@@ -58,7 +62,8 @@ class DataSourceRepository:
         source_id = self.current_id(session_id)
         if source_id is None:
             return None
-        document = self.db.find_one_by_id(config.DATA_SOURCES_COLLECTION, source_id)
+        document = self.db.find_one_by_id(
+            config.DATA_SOURCES_COLLECTION, source_id)
         if document is None:
             return None
         return source_id, _to_source(document)

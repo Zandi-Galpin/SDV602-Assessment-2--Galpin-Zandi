@@ -16,11 +16,12 @@ from tests.helpers import reset_database
 DB_MESSAGE = "Could not reach the database. Please try again later."
 
 
-#small helpers
+# small helpers
 
 def get_fresh_repo():
     reset_database()
     return SessionRepository()
+
 
 def get_repo_with_sessions():
     """Adds four sessions: two public and two private."""
@@ -31,8 +32,10 @@ def get_repo_with_sessions():
     repo.create("Secret", "priya", public=False)
     return repo
 
+
 def get_session_names(sessions):
     return [s.name for s in sessions]
+
 
 def check_for_session_error(func, message):
     try:
@@ -60,11 +63,11 @@ class FakeSessionView:
         self._confirms = list(confirms)
         self._hooks = hooks or {}
         self._count = 0
-        self.shown = []#sessions shown on screen
-        self.buttons = []#which buttons were turned on
+        self.shown = []  # sessions shown on screen
+        self.buttons = []  # which buttons were turned on
         self.errors = []
         self.statuses = []
-        self.confirmations = []  #names asked about
+        self.confirmations = []  # names asked about
         self.cleared = 0
         self.closed = False
 
@@ -101,7 +104,8 @@ class FakeSessionView:
 
 
 def make_event(event, row=None, name="", private=False):
-    values = {"-TABLE-": [] if row is None else [row], "-NEW_NAME-": name, "-PRIVATE-": private}
+    values = {"-TABLE-": [] if row is None else [row],
+              "-NEW_NAME-": name, "-PRIVATE-": private}
     return event, values
 
 
@@ -109,7 +113,8 @@ def open_test_screen(repo, events, user="alex", confirms=(), hooks=None):
     """Runs the screen using saved events.
     Returns the result, the fake window and any joined sessions.
     """
-    view = FakeSessionView(list(events) + [(sg.WIN_CLOSED, {})], confirms, hooks)
+    view = FakeSessionView(
+        list(events) + [(sg.WIN_CLOSED, {})], confirms, hooks)
     joined = []
     controller = SessionController(
         create_test_user(user), repo,
@@ -118,7 +123,7 @@ def open_test_screen(repo, events, user="alex", confirms=(), hooks=None):
     return result, view, joined
 
 
-#checking sessions 
+# checking sessions
 
 def test_session_owner_and_who_can_see_it():
     public = Session("1", "Open", "alex", True)
@@ -129,7 +134,7 @@ def test_session_owner_and_who_can_see_it():
     assert not private.is_visible_to("priya"), "private session leaked"
 
 
-#checking saved sessions
+# checking saved sessions
 
 def test_new_session_is_saved_and_returned():
     repo = get_fresh_repo()
@@ -139,34 +144,46 @@ def test_new_session_is_saved_and_returned():
     found = repo.find(session.id)
     assert found.name == "Population" and found.created is not None
 
+
 def test_session_name_spaces_are_fixed():
     repo = get_fresh_repo()
     assert repo.create("  Big    Data  ", "alex").name == "Big Data"
 
+
 def test_empty_or_too_long_names_are_not_allowed():
     repo = get_fresh_repo()
     for bad in ("", "   ", None):
-        check_for_session_error(lambda: repo.create(bad, "alex"), "Please enter a name")
-    check_for_session_error(lambda: repo.create("x" * 61, "alex"), "Session names can be 60 characters at most")
+        check_for_session_error(lambda: repo.create(
+            bad, "alex"), "Please enter a name")
+    check_for_session_error(lambda: repo.create(
+        "x" * 61, "alex"), "Session names can be 60 characters at most")
     repo.create("x" * 60, "alex")
+
 
 def test_same_person_cannot_use_the_same_name_twice():
     repo = get_fresh_repo()
     repo.create("Shared", "alex")
-    check_for_session_error(lambda: repo.create("shared", "alex"), "already have a session called 'shared'")
+    check_for_session_error(lambda: repo.create(
+        "shared", "alex"), "already have a session called 'shared'")
     repo.create("Shared", "priya")
+
 
 def test_people_only_see_public_and_their_own_private_sessions():
     repo = get_repo_with_sessions()
-    assert get_session_names(repo.list_visible("alex")) == ["Alpha", "Beta", "Gamma"]
-    assert get_session_names(repo.list_visible("priya")) == ["Alpha", "Beta", "Secret"]
-    assert get_session_names(repo.list_visible("stranger")) == ["Alpha", "Beta"]
+    assert get_session_names(repo.list_visible("alex")) == [
+        "Alpha", "Beta", "Gamma"]
+    assert get_session_names(repo.list_visible("priya")) == [
+        "Alpha", "Beta", "Secret"]
+    assert get_session_names(repo.list_visible("stranger")) == [
+        "Alpha", "Beta"]
+
 
 def test_session_names_are_sorted_alphabetically():
     repo = get_fresh_repo()
     for name in ("banana", "Apple", "cherry"):
         repo.create(name, "alex")
-    assert get_session_names(repo.list_visible("alex")) == ["Apple", "banana", "cherry"]
+    assert get_session_names(repo.list_visible("alex")) == [
+        "Apple", "banana", "cherry"]
 
 
 def test_missing_or_wrong_session_ids_return_nothing():
@@ -176,23 +193,28 @@ def test_missing_or_wrong_session_ids_return_nothing():
     assert repo.find("") is None
     assert repo.find(None) is None
 
+
 def test_owner_can_remove_their_own_session():
     repo = get_fresh_repo()
     session = repo.create("Temp", "alex")
     repo.delete(session.id, "alex")
     assert repo.find(session.id) is None
 
+
 def test_other_people_cannot_remove_a_session():
     repo = get_fresh_repo()
     session = repo.create("Mine", "alex")
-    check_for_session_error(lambda: repo.delete(session.id, "priya"), "Only the person who created")
+    check_for_session_error(lambda: repo.delete(
+        session.id, "priya"), "Only the person who created")
     assert repo.find(session.id) is not None, "session was deleted"
+
 
 def test_removing_a_session_that_does_not_exist():
     repo = get_fresh_repo()
     check_for_session_error(
         lambda: repo.delete("asfdasdfsdaaasdfsfda", "alex"), "no longer exists")
-    check_for_session_error(lambda: repo.delete("not-an-id", "alex"), "no longer exists")
+    check_for_session_error(lambda: repo.delete(
+        "not-an-id", "alex"), "no longer exists")
 
 
 def test_database_problems_are_not_hidden():
@@ -208,7 +230,7 @@ def test_database_problems_are_not_hidden():
         raise AssertionError("database failure was SWALLOWED")
 
 
-#checking the session screen 
+# checking the session screen
 
 def test_screen_shows_the_sessions_at_start():
     repo = get_repo_with_sessions()
@@ -218,6 +240,7 @@ def test_screen_shows_the_sessions_at_start():
                              ["Gamma", "alex (you)", "Private"]], view.shown
     assert view.buttons == [(False, False)], view.buttons
     assert result == "closed" and view.closed
+
 
 def test_buttons_change_when_a_session_is_selected():
     repo = get_repo_with_sessions()
@@ -235,17 +258,21 @@ def test_creating_a_public_session_works():
     repo = get_repo_with_sessions()
     result, view, joined = open_test_screen(
         repo, [make_event("-CREATE-", name="  Delta ")], user="priya")
-    assert "Delta" in get_session_names(repo.list_visible("alex")), "not public"
+    assert "Delta" in get_session_names(
+        repo.list_visible("alex")), "not public"
     assert view.cleared == 1 and view.errors == []
     assert view.statuses == ["Created 'Delta'."], view.statuses
     assert ["Delta", "priya (you)", "Public"] in view.shown[-1]
+
 
 def test_creating_a_private_session_works():
     repo = get_repo_with_sessions()
     open_test_screen(repo, [make_event("-CREATE-", name="Hidden", private=True)],
                      user="priya")
-    assert "Hidden" not in get_session_names(repo.list_visible("alex")), "leaked"
+    assert "Hidden" not in get_session_names(
+        repo.list_visible("alex")), "leaked"
     assert "Hidden" in get_session_names(repo.list_visible("priya"))
+
 
 def test_wrong_session_names_show_an_error():
     repo = get_repo_with_sessions()
@@ -256,18 +283,22 @@ def test_wrong_session_names_show_an_error():
     assert "already have a session called" in view.errors[1]
     assert view.cleared == 0, "input cleared even though creation failed"
 
+
 def test_joining_a_session_does_not_close_the_screen():
     repo = get_repo_with_sessions()
-    result, view, joined = open_test_screen(repo, [make_event("-JOIN-", row=1)])
+    result, view, joined = open_test_screen(
+        repo, [make_event("-JOIN-", row=1)])
     assert joined == [("Beta", "alex")], joined
     assert view.errors == []
     assert result == "closed", "screen closed itself after joining"
+
 
 def test_joining_without_selecting_a_session_shows_an_error():
     repo = get_repo_with_sessions()
     result, view, joined = open_test_screen(repo, [make_event("-JOIN-")])
     assert view.errors == ["Select a session first."], view.errors
     assert joined == []
+
 
 def test_cannot_join_a_session_that_was_removed():
     repo = get_repo_with_sessions()
@@ -277,21 +308,27 @@ def test_cannot_join_a_session_that_was_removed():
         hooks={0: lambda: repo.delete(beta.id, "priya")})
     assert view.errors == ["That session no longer exists."], view.errors
     assert joined == []
-    assert [row[0] for row in view.shown[-1]] == ["Alpha", "Gamma"], "list was not refreshed"
+    assert [row[0] for row in view.shown[-1]
+            ] == ["Alpha", "Gamma"], "list was not refreshed"
+
 
 def test_cannot_join_a_session_that_was_made_private():
     repo = get_repo_with_sessions()
 
     def make_beta_private():
-        repo.db.get_collection(config.SESSIONS_COLLECTION).update_one({"name": "Beta"}, {"$set": {"public": False}})
+        repo.db.get_collection(config.SESSIONS_COLLECTION).update_one(
+            {"name": "Beta"}, {"$set": {"public": False}})
 
-    result, view, joined = open_test_screen(repo, [make_event("-JOIN-", row=1)], hooks={0: make_beta_private})
+    result, view, joined = open_test_screen(
+        repo, [make_event("-JOIN-", row=1)], hooks={0: make_beta_private})
     assert view.errors == ["That session is private."], view.errors
     assert joined == []
 
+
 def test_removing_your_session_after_saying_yes():
     repo = get_repo_with_sessions()
-    result, view, joined = open_test_screen(repo, [make_event("-DELETE-", row=0)], confirms=[True])
+    result, view, joined = open_test_screen(
+        repo, [make_event("-DELETE-", row=0)], confirms=[True])
     assert view.confirmations == ["Alpha"], view.confirmations
     assert "Alpha" not in get_session_names(repo.list_visible("alex"))
     assert view.statuses == ["Deleted 'Alpha'."], view.statuses
@@ -300,15 +337,18 @@ def test_removing_your_session_after_saying_yes():
 
 def test_saying_no_keeps_the_session():
     repo = get_repo_with_sessions()
-    result, view, joined = open_test_screen(repo, [make_event("-DELETE-", row=0)], confirms=[False])
+    result, view, joined = open_test_screen(
+        repo, [make_event("-DELETE-", row=0)], confirms=[False])
     assert "Alpha" in get_session_names(repo.list_visible("alex"))
     assert view.errors == [] and view.statuses == []
 
 
 def test_cannot_remove_someone_elses_session():
     repo = get_repo_with_sessions()
-    result, view, joined = open_test_screen(repo, [make_event("-DELETE-", row=1)])
-    assert view.errors == ["Only the person who created a session can delete it."], view.errors
+    result, view, joined = open_test_screen(
+        repo, [make_event("-DELETE-", row=1)])
+    assert view.errors == [
+        "Only the person who created a session can delete it."], view.errors
     assert view.confirmations == [], "asked to confirm an impossible delete"
     assert "Beta" in get_session_names(repo.list_visible("alex"))
 
@@ -328,6 +368,7 @@ def test_refresh_shows_sessions_added_by_other_people():
     after = [row[0] for row in view.shown[-1]]
     assert "Newcomer" not in before and "Newcomer" in after, (before, after)
 
+
 def test_database_problems_show_a_simple_message():
     repo = SessionRepository(db=BrokenDatabase())
     result, view, joined = open_test_screen(
@@ -337,6 +378,7 @@ def test_database_problems_show_a_simple_message():
     for message in view.errors:
         assert "simulated" not in message, "raw error text reached the user"
     assert result == "closed"
+
 
 def test_logging_out_and_closing_give_different_results():
     repo = get_repo_with_sessions()

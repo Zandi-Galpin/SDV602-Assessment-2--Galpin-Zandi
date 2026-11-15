@@ -5,5 +5,3 @@ class ChatMessage:
         self.username = username
         self.text = text
         self.timestamp = timestamp
-
-        

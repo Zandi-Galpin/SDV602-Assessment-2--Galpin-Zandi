@@ -4,7 +4,7 @@ import config
 from data.database_manager import DatabaseManager
 from model.user import User
 
-MAX_PASSWORD_BYTES = 72  #bcrypt cannot hash anything longer
+MAX_PASSWORD_BYTES = 72  # bcrypt cannot hash anything longer
 
 
 class AuthError(Exception):

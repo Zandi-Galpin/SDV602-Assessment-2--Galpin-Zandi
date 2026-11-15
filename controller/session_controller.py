@@ -6,6 +6,7 @@ from data.session_repository import NOT_OWNER_MESSAGE, SessionError
 DATABASE_UNREACHABLE = "Could not reach the database. Please try again later."
 NOTHING_SELECTED = "Select a session first."
 
+
 class SessionController:
     """Runs the session management screen for a logged in user. can browse,
     create, join and delete sessions"""
@@ -18,7 +19,7 @@ class SessionController:
             from view.session_view import SessionView
             view = SessionView(user.name)
         self.view = view
-        self.sessions = []#the sessions currently shown, in row order
+        self.sessions = []  # the sessions currently shown, in row order
         self.result = None
 
     def open(self):
@@ -54,7 +55,6 @@ class SessionController:
             self._attempt(self._join, values)
         elif event == "-DELETE-":
             self._attempt(self._delete, values)
-
 
     def _attempt(self, action, *args):
         """Run an action, showing a message instead of crashing."""
@@ -100,7 +100,8 @@ class SessionController:
         if selected is None:
             raise SessionError(NOTHING_SELECTED)
 
-        #look it up again, it could have been deleted or changed since the list was drawn.
+        # look it up again, it could have been deleted or changed since the
+        # list was drawn.
         current = self.session_repository.find(selected.id)
         if current is None:
             self._refresh()

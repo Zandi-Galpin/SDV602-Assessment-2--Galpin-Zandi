@@ -113,12 +113,15 @@ class DataSource:
             raise DataError(f"{self.name} has no columns.")
 
         lowered = {column: column.lower() for column in self.columns}
-        x_key = next((c for c in self.columns if lowered[c] in X_COLUMN_NAMES), self.columns[0])
+        x_key = next(
+            (c for c in self.columns if lowered[c] in X_COLUMN_NAMES), self.columns[0])
 
-        numeric = [c for c in self.columns if c != x_key and self.is_numeric_column(c)]
+        numeric = [c for c in self.columns if c !=
+                   x_key and self.is_numeric_column(c)]
         if not numeric:
             raise DataError(f"{self.name} has no numeric column to plot.")
-        y_key = next((c for c in numeric if lowered[c] in Y_COLUMN_NAMES), numeric[-1])
+        y_key = next(
+            (c for c in numeric if lowered[c] in Y_COLUMN_NAMES), numeric[-1])
 
         series_key = next(
             (c for c in self.columns
@@ -133,7 +136,8 @@ class DataSource:
         y column are skipped and counted."""
         for key in (x_key, y_key, series_key):
             if key is not None and key not in self.columns:
-                raise DataError(f"Column '{key}' was not found in {self.name}.")
+                raise DataError(
+                    f"Column '{key}' was not found in {self.name}.")
 
         grouped = {}
         skipped = 0
@@ -186,19 +190,24 @@ class DataSource:
 
     def describe(self, chart):
         """A description of what the chart shows."""
-        sentences = [f"{' + '.join(self.part_names)}: {len(self.rows)} rows, {len(self.columns)} columns."]
+        sentences = [
+            f"{' + '.join(self.part_names)}: {len(self.rows)} rows, {len(self.columns)} columns."]
 
         showing = f"Showing {chart.y_key} by {chart.x_key}"
         if chart.series_key:
-            showing += (f", one line per {chart.series_key} ({_join_names(chart.series)})")
+            showing += (
+                f", one line per {chart.series_key} ({_join_names(chart.series)})")
         sentences.append(showing + ".")
 
         if len(chart.x_labels) > 1:
-            sentences.append(f"{chart.x_key} runs from {chart.x_labels[0]} to {chart.x_labels[-1]}.")
+            sentences.append(
+                f"{chart.x_key} runs from {chart.x_labels[0]} to {chart.x_labels[-1]}.")
 
         low, high = chart.y_extent()
-        sentences.append(f"{chart.y_key} ranges from {_format_number(low)} to {_format_number(high)}.")
+        sentences.append(
+            f"{chart.y_key} ranges from {_format_number(low)} to {_format_number(high)}.")
 
         if chart.skipped:
-            sentences.append(f"{chart.skipped} rows were skipped because they had values that couldnt be used.")
+            sentences.append(
+                f"{chart.skipped} rows were skipped because they had values that couldnt be used.")
         return " ".join(sentences)

@@ -24,12 +24,13 @@ class RemoteDesController(DesController):
     """A DES for a shared session. the local chart controls plus the
     session's data, uploads, and live chat.
 
-    slow work runs on worker threads through self.background, and 
+    slow work runs on worker threads through self.background, and
     the results come back to handle() as events, so many of these windows
     can be open and busy at the same time without freezing each other or the session screen.
     """
 
-    def __init__(self, user, session, source_repository, message_repository, view=None, background=None, loader=load_csv, explorer=None):
+    def __init__(self, user, session, source_repository, message_repository,
+                 view=None, background=None, loader=load_csv, explorer=None):
         if view is None:
             from view.des_view import DesView
             view = DesView(f"Data Explorer - {session.name}", remote=True)
@@ -38,7 +39,8 @@ class RemoteDesController(DesController):
         self.session = session
         self.sources = source_repository
         self.feed = ChatFeed(message_repository, session.id)
-        self.background = (background if background is not None else ThreadBackground(view))
+        self.background = (
+            background if background is not None else ThreadBackground(view))
         self.finished = False
         self.offline = False
         self.loaded_id = None
@@ -46,7 +48,7 @@ class RemoteDesController(DesController):
         self._loading = False
         self._unexpected_seen = False
 
-#the interface WindowManager uses
+# the interface WindowManager uses
 
     def open(self):
         """Show the placeholder chart, then load the sessions data and chat in the background."""
@@ -71,7 +73,7 @@ class RemoteDesController(DesController):
 
     def handle(self, event, values=None):
         if self.finished:
-            return #a late event for a window that has already closed
+            return  # a late event for a window that has already closed
         values = values or {}
         if event == "-BACKGROUND-":
             on_done, ok, value = values["-BACKGROUND-"]
@@ -87,12 +89,12 @@ class RemoteDesController(DesController):
         elif event == "-CHAT_SEND-":
             self._send(values.get("-CHAT_INPUT-", ""))
         else:
-            super().handle(event) #zoom, pan and reset
+            super().handle(event)  # zoom, pan and reset
 
-    #polling 
+    # polling
 
     def _poll_job(self):
-        #worker thread. The chat refresh goes last.
+        # worker thread. The chat refresh goes last.
         source_id = self.sources.current_id(self.session.id)
         return self.feed.refresh(), source_id
 
@@ -114,7 +116,7 @@ class RemoteDesController(DesController):
                 and not self._loading):
             self._start_load()
 
-    #loading the sessions data source 
+    # loading the sessions data source
 
     def _start_load(self):
         self._loading = True
@@ -137,7 +139,7 @@ class RemoteDesController(DesController):
             return
 
         source_id, source = value
-        self.loaded_id = source_id #even if unusable do not retry it
+        self.loaded_id = source_id  # even if unusable do not retry it
         try:
             self.explorer.set_source(source)
         except DataError as e:
@@ -147,16 +149,17 @@ class RemoteDesController(DesController):
                               "(shared with this session).")
         self.view.draw(self.explorer)
 
-    #uploading 
+    # uploading
 
     def _upload(self):
         path = self.view.ask_for_file("Choose a CSV file to upload")
         if not path:
             return
-        self._transfer(lambda: self.loader(path), f"Uploading {os.path.basename(path)}...")
+        self._transfer(lambda: self.loader(path),
+                       f"Uploading {os.path.basename(path)}...")
 
     def _append_remote(self):
-        self.explorer.require_data() #fails before opening the dialog
+        self.explorer.require_data()  # fails before opening the dialog
         path = self.view.ask_for_file("Choose a CSV file to add")
         if not path:
             return
@@ -174,7 +177,8 @@ class RemoteDesController(DesController):
             """dont accept data that cant be charted BEFORE it reaches the
             server, so a bad upload cant replace a working source"""
             source.chart_data(*source.guess_chart_columns())
-            return (self.sources.upload(self.session.id, source, self.user.name), source)
+            return (self.sources.upload(self.session.id,
+                    source, self.user.name), source)
 
         self.view.show_status(status)
         self.background.submit(job, self._transfer_done)
@@ -189,10 +193,11 @@ class RemoteDesController(DesController):
         source_id, source = value
         self.explorer.set_source(source)
         self.loaded_id = source_id
-        self.view.show_status(f"Uploaded; everyone in this session now sees {' + '.join(source.part_names)}.")
+        self.view.show_status(
+            f"Uploaded; everyone in this session now sees {' + '.join(source.part_names)}.")
         self.view.draw(self.explorer)
 
-    #chat 
+    # chat
 
     def _send(self, text):
         text = text.strip()
@@ -219,15 +224,15 @@ class RemoteDesController(DesController):
                 self.view.show_error(SEND_FAILED)
             else:
                 self._report(value)
-            return #the text stays in the box
+            return  # the text stays in the box
         if value:
             self.view.clear_chat_input()
             self.tick()
 
-    #errors 
+    # errors
 
     def _report(self, error, quiet=False):
-        """Turn an exception into something the user can read. quiet=True 
+        """Turn an exception into something the user can read. quiet=True
         is for the background checks that run every second"""
         if isinstance(error, SessionError):
             if not self.finished:

@@ -11,7 +11,7 @@ SEND_FAILED = "Your message could not be sent. Please try again."
 
 class ChatController:
     """Runs the chat window for one session. The window is redrawn
-    when the messages change, and a database outage shows one status 
+    when the messages change, and a database outage shows one status
     and clears itself when the connection comes back."""
 
     def __init__(self, username, message_repository, session, view=None):
@@ -59,7 +59,7 @@ class ChatController:
             sent = self.feed.send(self.username, text)
         except ChatError as e:
             self.view.show_error(str(e))
-            return #the text stays in the box so it can be edited
+            return  # the text stays in the box so it can be edited
         except DatabaseError:
             self.view.show_error(SEND_FAILED)
             return

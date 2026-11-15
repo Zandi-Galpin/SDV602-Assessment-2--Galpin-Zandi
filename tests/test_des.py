@@ -29,8 +29,8 @@ class FakeDesView:
     def __init__(self, events, files=()):
         self._events = list(events)
         self._files = list(files)
-        self.draws = [] #(has_data, view limits) at each redraw
-        self.asked = [] #prompts of the file dialogs that were opened
+        self.draws = []  # (has_data, view limits) at each redraw
+        self.asked = []  # prompts of the file dialogs that were opened
         self.errors = []
         self.statuses = []
         self.closed = False
@@ -57,11 +57,13 @@ class FakeDesView:
     def close(self):
         self.closed = True
 
+
 def run_controller(events, files=(), initial_file=None):
     view = FakeDesView(list(events) + [sg.WIN_CLOSED], files)
     controller = DesController(view=view)
     controller.run(initial_file)
     return controller, view
+
 
 def sample_chart():
     rows = [{"Period": str(2010 + i // 2), "Count": str(50 + i),
@@ -71,7 +73,7 @@ def sample_chart():
     return source.chart_data("Period", "Count", "Type")
 
 
-#chart drawing tests
+# chart drawing tests
 
 def test_tick_labels_do_not_exceed_the_maximum_limit():
     labels = [f"L{i}" for i in range(60)]
@@ -79,14 +81,17 @@ def test_tick_labels_do_not_exceed_the_maximum_limit():
     assert 0 < len(positions) <= 10, positions
     assert shown == [labels[i] for i in positions], "labels out of step"
 
+
 def test_tick_labels_only_show_values_inside_the_view():
     labels = [f"L{i}" for i in range(20)]
     positions, shown = visible_ticks(labels, 5.5, 8.5)
     assert positions == [6, 7, 8], positions
     assert shown == ["L6", "L7", "L8"], shown
 
+
 def test_no_tick_labels_are_shown_between_data_points():
     assert visible_ticks(["a", "b", "c", "d", "e"], 3.2, 3.8) == ([], [])
+
 
 def test_chart_displays_all_data_series_correctly():
     chart = sample_chart()
@@ -103,6 +108,7 @@ def test_chart_displays_all_data_series_correctly():
     assert axes.get_title() == "s.csv"
     assert axes.get_legend() is not None, "legend missing for two series"
 
+
 def test_redrawing_chart_does_not_create_extra_charts():
     chart = sample_chart()
     view = ViewWindow.fitting(*chart.x_extent(), *chart.y_extent())
@@ -110,6 +116,7 @@ def test_redrawing_chart_does_not_create_extra_charts():
     draw_chart(figure, chart, view)
     draw_chart(figure, chart, view)
     assert len(figure.axes) == 1, "second draw stacked a new set of axes"
+
 
 def test_chart_can_be_drawn_when_zoomed_in_close():
     chart = sample_chart()
@@ -122,6 +129,7 @@ def test_chart_can_be_drawn_when_zoomed_in_close():
     draw_chart(figure, chart, view)
     canvas.draw()
 
+
 def test_placeholder_displays_the_correct_message():
     for message in ("No data loaded", "Loading data..."):
         figure = Figure()
@@ -132,16 +140,18 @@ def test_placeholder_displays_the_correct_message():
         figure.canvas.draw()
 
 
-#DES controller tests
+# DES controller tests
 
 def test_controller_does_not_open_the_gui_when_imported():
     assert "view.des_view" not in sys.modules, \
         "importing the controller pulled in the GUI window class"
 
+
 def test_controller_shows_empty_chart_at_start_and_closes():
     controller, view = run_controller([])
     assert view.draws == [(False, None)], view.draws
     assert view.closed, "window not closed when the user closed it"
+
 
 def test_controller_loads_initial_file_before_showing_chart():
     path = write_temp_csv(FIRST, name="first.csv")
@@ -150,6 +160,7 @@ def test_controller_loads_initial_file_before_showing_chart():
     assert view.draws[0][0] is True, view.draws
     assert view.statuses == ["Loaded first.csv."], view.statuses
 
+
 def test_controller_shows_error_for_invalid_initial_file():
     path = write_temp_csv(NO_NUMBERS, name="bad.csv")
     controller, view = run_controller([], initial_file=path)
@@ -157,10 +168,12 @@ def test_controller_shows_error_for_invalid_initial_file():
     assert view.draws == [(False, None)], view.draws
     assert view.closed
 
+
 def test_controller_shows_error_when_initial_file_is_missing():
     controller, view = run_controller([], initial_file="nowhere/none.csv")
     assert len(view.errors) == 1 and "File not found" in view.errors[0]
     assert view.draws == [(False, None)], view.draws
+
 
 def test_controller_loads_a_new_file_when_source_is_changed():
     path = write_temp_csv(FIRST, name="first.csv")
@@ -169,13 +182,14 @@ def test_controller_loads_a_new_file_when_source_is_changed():
     assert view.errors == [] and view.statuses == ["Loaded first.csv."]
     assert view.draws[-1][0] is True
 
+
 def test_canceling_file_selection_does_not_change_data():
-    #cancelling when no data is loaded
+    # cancelling when no data is loaded
     controller, view = run_controller(["-CHANGE_SOURCE-"], files=[""])
     assert not controller.explorer.has_data()
     assert view.errors == [] and view.statuses == [], view.errors
 
-    #cancelling both dialogs when data is already loaded
+    # cancelling both dialogs when data is already loaded
     path = write_temp_csv(FIRST, name="first.csv")
     controller, view = run_controller(
         ["-CHANGE_SOURCE-", "-APPEND-", "-CHANGE_SOURCE-"],
@@ -185,6 +199,7 @@ def test_canceling_file_selection_does_not_change_data():
     assert view.errors == [], view.errors
     assert view.statuses == ["Loaded first.csv."], view.statuses
 
+
 def test_invalid_file_does_not_replace_existing_data():
     good = write_temp_csv(FIRST, name="good.csv")
     bad = write_temp_csv(NO_NUMBERS, name="bad.csv")
@@ -192,6 +207,7 @@ def test_invalid_file_does_not_replace_existing_data():
         ["-CHANGE_SOURCE-", "-CHANGE_SOURCE-"], files=[good, bad])
     assert controller.explorer.source.name == "good.csv"
     assert len(view.errors) == 1 and "no numeric column" in view.errors[0]
+
 
 def test_appending_file_adds_rows_and_shows_confirmation():
     first = write_temp_csv(FIRST, name="first.csv")
@@ -203,6 +219,7 @@ def test_appending_file_adds_rows_and_shows_confirmation():
         view.statuses
     assert view.errors == []
 
+
 def test_appending_file_with_different_columns_is_rejected():
     first = write_temp_csv(FIRST, name="first.csv")
     wrong = write_temp_csv(WRONG_COLUMNS, name="wrong.csv")
@@ -211,10 +228,12 @@ def test_appending_file_with_different_columns_is_rejected():
     assert len(controller.explorer.source.rows) == 4
     assert len(view.errors) == 1 and "does not match" in view.errors[0]
 
+
 def test_view_buttons_show_error_when_no_data_is_loaded():
     controller, view = run_controller(
         ["-ZOOM_IN-", "-ZOOM_OUT-", "-PAN_LEFT-", "-PAN_RIGHT-", "-RESET-"])
     assert view.errors == ["Load a data source first."] * 5, view.errors
+
 
 def test_append_button_does_not_open_file_selection_without_data():
     path = write_temp_csv(FIRST, name="first.csv")
@@ -222,6 +241,7 @@ def test_append_button_does_not_open_file_selection_without_data():
     assert view.errors == ["Load a data source first."], view.errors
     assert view.asked == [], f"dialog opened anyway: {view.asked}"
     assert not controller.explorer.has_data()
+
 
 def test_zoom_pan_and_reset_buttons_update_the_chart():
     path = write_temp_csv(FIRST, name="first.csv")
@@ -239,6 +259,7 @@ def test_zoom_pan_and_reset_buttons_update_the_chart():
     assert controller.explorer.view.is_full_view()
     assert view.errors == []
 
+
 def test_pan_left_moves_the_chart_to_the_left():
     path = write_temp_csv(FIRST, name="first.csv")
     controller, view = run_controller(
@@ -248,10 +269,12 @@ def test_pan_left_moves_the_chart_to_the_left():
     after_pan_left = view.draws[-1][1]
     assert after_pan_left[0] < before_pan_left[0], view.draws[-2:]
 
+
 def test_unknown_actions_are_ignored():
     controller, view = run_controller(["-SOMETHING_ELSE-", "__TIMEOUT__"])
     assert view.draws == [(False, None)], "an unknown event caused a redraw"
     assert view.errors == []
+
 
 ALL_TESTS = [
     test_tick_labels_do_not_exceed_the_maximum_limit,

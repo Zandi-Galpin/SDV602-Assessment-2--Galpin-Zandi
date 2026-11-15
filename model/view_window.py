@@ -2,14 +2,15 @@
 changes to four numbers, so they can be tested without a window.
 """
 
-#spans this close to the full range count as the full range, so repeated
-#zooming in and out wont leave the view short of fully zoomed out.
+# spans this close to the full range count as the full range, so repeated
+# zooming in and out wont leave the view short of fully zoomed out.
 FULL_SPAN_TOLERANCE = 1e-9
+
 
 class ViewWindow:
     ZOOM_STEP = 1.5
     PAN_STEP = 0.25
-    MIN_SPAN = 0.02  #cant zoom past 2% of the full thing
+    MIN_SPAN = 0.02  # cant zoom past 2% of the full thing
 
     def __init__(self, x_min, x_max, y_min, y_max):
         if x_max <= x_min or y_max <= y_min:
@@ -52,8 +53,9 @@ class ViewWindow:
         span = (high - low) / factor
         span = max(min(span, full_span), full_span * cls.MIN_SPAN)
         centre = (low + high) / 2
-        return cls._fit_inside(centre - span / 2, centre + span / 2, full_low, full_high)
-        
+        return cls._fit_inside(centre - span / 2, centre +
+                               span / 2, full_low, full_high)
+
     def zoom(self, factor, zoom_x=True, zoom_y=True):
         """factor above 1 zooms in, below 1 zooms out.
         zoom_x and zoom_y choose which axes change."""
@@ -61,18 +63,22 @@ class ViewWindow:
             raise ValueError("zoom factor must be positive")
         fx_min, fx_max, fy_min, fy_max = self.full
         if zoom_x:
-            self.x_min, self.x_max = self._zoom_axis(self.x_min, self.x_max, fx_min, fx_max, factor)
+            self.x_min, self.x_max = self._zoom_axis(
+                self.x_min, self.x_max, fx_min, fx_max, factor)
         if zoom_y:
-            self.y_min, self.y_max = self._zoom_axis(self.y_min, self.y_max, fy_min, fy_max, factor)
-        
+            self.y_min, self.y_max = self._zoom_axis(
+                self.y_min, self.y_max, fy_min, fy_max, factor)
+
     def pan(self, dx_fraction=0.0, dy_fraction=0.0):
         """Shift the view by a fraction of its width and height.
         The view stops at the edge of the data."""
         fx_min, fx_max, fy_min, fy_max = self.full
         dx = (self.x_max - self.x_min) * dx_fraction
         dy = (self.y_max - self.y_min) * dy_fraction
-        self.x_min, self.x_max = self._fit_inside(self.x_min + dx, self.x_max + dx, fx_min, fx_max)
-        self.y_min, self.y_max = self._fit_inside(self.y_min + dy, self.y_max + dy, fy_min, fy_max)
+        self.x_min, self.x_max = self._fit_inside(
+            self.x_min + dx, self.x_max + dx, fx_min, fx_max)
+        self.y_min, self.y_max = self._fit_inside(
+            self.y_min + dy, self.y_max + dy, fy_min, fy_max)
 
     def set_y(self, low, high):
         """Set the visible y range directly (used to fit y to the data)."""
@@ -88,4 +94,3 @@ class ViewWindow:
 
     def limits(self):
         return self.x_min, self.x_max, self.y_min, self.y_max
-

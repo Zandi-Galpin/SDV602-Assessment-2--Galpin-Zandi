@@ -31,7 +31,7 @@ WRONG_COLUMNS = "Period,Other\n2012,1\n"
 NO_NUMBERS = "Name,Colour\nx,red\n"
 
 
-#test helpers
+# test helpers
 
 def make_sample_data(name="a.csv"):
     """Create a small example data file."""
@@ -133,7 +133,7 @@ def make_csv(text, name="data.csv"):
     return write_temp_csv(text, name=name)
 
 
-#saved data tests
+# saved data tests
 
 def test_saved_data_can_be_loaded_again():
     sessions, session = make_session()
@@ -164,6 +164,7 @@ def test_merged_files_keep_their_original_names():
     sources.upload(session.id, merged, "alex")
     assert sources.load_current(session.id)[1].part_names == ["a.csv", "b.csv"]
 
+
 def test_new_upload_replaces_the_current_file():
     sessions, session = make_session()
     sources = DataSourceRepository()
@@ -171,6 +172,7 @@ def test_new_upload_replaces_the_current_file():
     second = sources.upload(session.id, make_sample_data("two.csv"), "priya")
     assert first != second and sources.current_id(session.id) == second
     assert sources.load_current(session.id)[1].name == "two.csv"
+
 
 def test_no_upload_means_no_saved_file():
     sessions, session = make_session()
@@ -185,17 +187,22 @@ def test_upload_to_deleted_session_is_rejected():
     sessions.delete(session.id, "alex")
     check_error(SessionError, lambda: sources.upload(
         session.id, make_sample_data(), "alex"), "no longer exists")
-    leftovers = DatabaseManager.getInstance().find_many("data_sources", {"session_id": session.id})
+    leftovers = DatabaseManager.getInstance().find_many(
+        "data_sources", {"session_id": session.id})
     assert leftovers == [], "uploaded data was left behind"
-    check_error(SessionError, lambda: sources.current_id(session.id), "no longer exists")
+    check_error(SessionError, lambda: sources.current_id(
+        session.id), "no longer exists")
 
 
 def test_upload_with_too_many_rows_is_rejected():
     sessions, session = make_session()
     sources = DataSourceRepository()
-    big = DataSource("big.csv", ["P", "V"], [{"P": str(i), "V": "1"} for i in range(MAX_ROWS + 1)])
-    check_error(DataError, lambda: sources.upload(session.id, big, "alex"), "too many rows")
+    big = DataSource("big.csv", ["P", "V"], [
+                     {"P": str(i), "V": "1"} for i in range(MAX_ROWS + 1)])
+    check_error(DataError, lambda: sources.upload(
+        session.id, big, "alex"), "too many rows")
     assert sources.current_id(session.id) is None
+
 
 def test_deleting_a_session_only_removes_its_own_files():
     sessions, session = make_session()
@@ -204,18 +211,20 @@ def test_deleting_a_session_only_removes_its_own_files():
     sources.upload(session.id, make_sample_data("mine.csv"), "alex")
     sources.upload(other.id, make_sample_data("kept.csv"), "alex")
     sessions.delete(session.id, "alex")
-    found = DatabaseManager.getInstance().find_many("data_sources", {"session_id": session.id})
+    found = DatabaseManager.getInstance().find_many(
+        "data_sources", {"session_id": session.id})
     assert found == [], "data sources of a deleted session were left"
     assert sources.load_current(other.id)[1].name == "kept.csv"
 
 
 def test_database_errors_are_reported_when_saving_or_loading():
     sources = DataSourceRepository(db=BrokenDatabase())
-    for action in (lambda: sources.upload("s", make_sample_data(), "alex"), lambda: sources.current_id("s"), lambda: sources.load_current("s")):
+    for action in (lambda: sources.upload("s", make_sample_data(), "alex"),
+                   lambda: sources.current_id("s"), lambda: sources.load_current("s")):
         check_error(DatabaseError, action)
 
 
-#background task tests
+# background task tests
 
 class PostingView:
     def __init__(self):
@@ -242,7 +251,8 @@ def test_background_task_runs_on_another_thread():
     key, (callback, ok, value) = view.posted[0]
     assert key == "-BACKGROUND-" and callback is done
     assert ok is True and value == 42
-    assert seen["thread"] is not threading.main_thread(), "the job ran on the calling thread"
+    assert seen["thread"] is not threading.main_thread(
+    ), "the job ran on the calling thread"
 
 
 def test_background_task_reports_errors():
@@ -266,7 +276,7 @@ def test_immediate_background_runs_tasks_and_reports_errors():
     assert isinstance(results[1][1], ZeroDivisionError)
 
 
-#remote DES tests
+# remote DES tests
 
 def test_opening_shows_loading_then_no_data_message():
     sessions, session = make_session()
@@ -298,10 +308,12 @@ def test_refreshing_shows_new_chat_messages_only():
     a.tick()
     assert a_view.chat_updates[-1] == [("priya", "hi alex")]
 
+
 def test_another_users_upload_appears_after_refresh():
     sessions, session = make_session()
     a, a_view = open_remote_des("alex", session)
-    b, b_view = open_remote_des("priya", session, files=[make_csv(FIRST, "first.csv")])
+    b, b_view = open_remote_des("priya", session, files=[
+                                make_csv(FIRST, "first.csv")])
     assert not a.explorer.has_data()
     b.handle("-UPLOAD-")
     a.tick()
@@ -311,13 +323,15 @@ def test_another_users_upload_appears_after_refresh():
 
 def test_upload_shares_the_file_with_everyone_in_the_session():
     sessions, session = make_session()
-    a, a_view = open_remote_des("alex", session, files=[make_csv(FIRST, "first.csv")])
+    a, a_view = open_remote_des("alex", session, files=[
+                                make_csv(FIRST, "first.csv")])
     a.handle("-UPLOAD-")
     assert a.explorer.has_data() and a_view.errors == []
     loaded = DataSourceRepository().load_current(session.id)[1]
     assert loaded.name == "first.csv" and len(loaded.rows) == 4
     assert any("everyone in this session" in s for s in a_view.statuses)
-    stored = DatabaseManager.getInstance().find_many("data_sources", {"session_id": session.id})
+    stored = DatabaseManager.getInstance().find_many(
+        "data_sources", {"session_id": session.id})
     assert stored[0]["uploaded_by"] == "alex"
 
 
@@ -351,7 +365,8 @@ def test_missing_file_shows_an_error_message():
 
 def test_adding_a_file_merges_it_with_the_current_file():
     sessions, session = make_session()
-    a, view = open_remote_des("alex", session, files=[make_csv(FIRST, "first.csv"), make_csv(SECOND, "second.csv")])
+    a, view = open_remote_des("alex", session, files=[make_csv(
+        FIRST, "first.csv"), make_csv(SECOND, "second.csv")])
     a.handle("-UPLOAD-")
     a.handle("-APPEND-")
     assert len(a.explorer.source.rows) == 6
@@ -402,7 +417,8 @@ def test_empty_messages_are_ignored_and_long_messages_are_rejected():
 
 def test_zoom_and_reset_work_in_a_shared_session():
     sessions, session = make_session()
-    a, view = open_remote_des("alex", session, files=[make_csv(FIRST, "first.csv")])
+    a, view = open_remote_des("alex", session, files=[
+                              make_csv(FIRST, "first.csv")])
     a.handle("-UPLOAD-")
     a.handle("-ZOOM_IN-")
     assert not a.explorer.view.is_full_view()
@@ -438,11 +454,13 @@ def test_message_is_kept_when_sending_during_a_connection_problem():
 def test_upload_during_a_connection_problem_shows_a_message():
     sessions, session = make_session()
     database = SwitchableDatabase(DatabaseManager.getInstance())
-    a, view = open_remote_des("alex", session, db=database, files=[make_csv(FIRST, "first.csv")])
+    a, view = open_remote_des("alex", session, db=database, files=[
+                              make_csv(FIRST, "first.csv")])
     database.down = True
     a.handle("-UPLOAD-")
     assert view.errors == [rdc.DATABASE_UNREACHABLE], view.errors
     assert not a.explorer.has_data()
+
 
 def test_deleted_session_closes_the_window_and_shows_a_message():
     sessions, session = make_session()
@@ -452,7 +470,6 @@ def test_deleted_session_closes_the_window_and_shows_a_message():
     a.tick()
     assert view.errors == [rdc.SESSION_DELETED], view.errors
     assert a.is_finished() and view.closed == 1
-
 
 
 def test_closing_the_window_stops_all_further_actions():
@@ -504,7 +521,8 @@ def test_unexpected_background_error_does_not_crash_the_window():
     traceback.print_exception = lambda *args, **kwargs: printed.append(args)
     try:
         view = FakeRemoteView()
-        controller = RemoteDesController(User("alex", b"h"), session, Exploding(), MessageRepository(), view, ImmediateBackground())
+        controller = RemoteDesController(User("alex", b"h"), session, Exploding(
+        ), MessageRepository(), view, ImmediateBackground())
         controller.open()
         controller.tick()
         controller.tick()
@@ -544,11 +562,12 @@ def test_background_results_are_handled_by_the_window():
     sessions, session = make_session()
     a, view = open_remote_des("alex", session)
     seen = []
-    a.handle("-BACKGROUND-", {"-BACKGROUND-": (lambda ok, value: seen.append((ok, value)), True, 5)})
+    a.handle("-BACKGROUND-", {"-BACKGROUND-": (lambda ok,
+             value: seen.append((ok, value)), True, 5)})
     assert seen == [(True, 5)]
 
 
-#window manager
+# window manager
 
 class FakeWindowView:
     def __init__(self):
@@ -649,7 +668,7 @@ def test_manager_can_find_a_window_by_session():
     assert manager.find_session("s2") is None
 
 
-#session screen tests
+# session screen tests
 
 class NullSessionView:
     def __init__(self):
@@ -668,7 +687,8 @@ class NullSessionView:
 
 def test_session_screen_opens_and_logs_out():
     sessions, session = make_session()
-    controller = SessionController(User("alex", b"h"), sessions, lambda s, u: None, NullSessionView())
+    controller = SessionController(
+        User("alex", b"h"), sessions, lambda s, u: None, NullSessionView())
     assert not controller.is_finished()
     controller.open()
     assert controller.view.shown[0][0][0] == "Shared"
@@ -679,9 +699,11 @@ def test_session_screen_opens_and_logs_out():
 
 def test_closing_session_screen_marks_it_as_closed():
     sessions, session = make_session()
-    controller = SessionController(User("alex", b"h"), sessions, lambda s, u: None, NullSessionView())
+    controller = SessionController(
+        User("alex", b"h"), sessions, lambda s, u: None, NullSessionView())
     controller.handle(sg.WIN_CLOSED, None)
     assert controller.result == "closed" and controller.is_finished()
+
 
 ALL_TESTS = [
     test_saved_data_can_be_loaded_again,
