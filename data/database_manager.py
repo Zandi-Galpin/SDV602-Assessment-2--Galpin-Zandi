@@ -90,3 +90,16 @@ class DatabaseManager:
                 query).deleted_count
         except PyMongoError as e:
             raise DatabaseError(f"Could not delete from {collection}") from e
+
+    def update_one_by_id(self, collection, id, fields):
+        """Set fields on the document with this id. Returns how many
+        documents matched (or 0 if no document)."""
+        try:
+            query = {"_id": ObjectId(id)}
+        except (InvalidId, TypeError):
+            return 0
+        try:
+            return self.get_collection(collection).update_one(
+                query, {"$set": fields}).matched_count
+        except PyMongoError as e:
+            raise DatabaseError(f"Could not update {collection}") from e

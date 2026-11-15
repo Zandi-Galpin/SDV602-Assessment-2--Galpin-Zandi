@@ -12,7 +12,6 @@ import sys
 import FreeSimpleGUI as sg
 
 import config
-from controller.chat_controller import ChatController
 from controller.login_controller import LoginController
 from data.database_manager import DatabaseError
 from data.message_repository import MessageRepository
@@ -20,6 +19,9 @@ from data.user_repository import UserRepository
 from controller.des_controller import DesController
 from controller.session_controller import SessionController
 from data.session_repository import SessionRepository
+from controller.remote_des_controller import RemoteDesController
+from controller.window_manager import WindowManager
+from data.data_source_repository import DataSourceRepository
 
 class App:
     """Remote mode: login, then chat (sessions replace chat later)."""
@@ -28,20 +30,34 @@ class App:
         self.user_repository = UserRepository()
         self.message_repository = MessageRepository()
         self.session_repository = SessionRepository()
+        self.source_repository = DataSourceRepository()
+        self.workspace = None
 
     def run(self):
         while True:
             user = LoginController(self.user_repository).run()
             if not user:
                 break
-
-            result = SessionController(
-                user, self.session_repository, self.open_session).run()
-            if result != "logout":
+            if self._run_workspace(user) != "logout":
                 break
 
+    def _run_workspace(self, user):
+        sessions = SessionController(
+            user, self.session_repository, self.open_session)
+        self.workspace = WindowManager(sessions)
+        sessions.open()
+        self.workspace.run()
+        return sessions.result
+
     def open_session(self, session, user):
-        ChatController(user.name, self.message_repository, session).run()
+        existing = self.workspace.find_session(session.id)
+        if existing is not None:
+            existing.view.window.bring_to_front()
+            return
+        controller = RemoteDesController(
+            user, session, self.source_repository, self.message_repository)
+        controller.open()
+        self.workspace.add(controller)
 
 
 def build_parser():

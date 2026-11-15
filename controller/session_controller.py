@@ -19,28 +19,32 @@ class SessionController:
             view = SessionView(user.name)
         self.view = view
         self.sessions = []#the sessions currently shown, in row order
+        self.result = None
+
+    def open(self):
+        self._attempt(self._refresh)
 
     def run(self):
         """Run until the user logs out or closes the window"""
-        self._attempt(self._refresh)
-
-        while True:
+        self.open()
+        while not self.is_finished():
             event, values = self.view.read()
-
-            if event == sg.WIN_CLOSED:
-                result = "closed"
-                break
-            if event == "-LOGOUT-":
-                result = "logout"
-                break
-
             self.handle(event, values)
-
         self.view.close()
-        return result
+        return self.result
+
+    def is_finished(self):
+        return self.result is not None
+
+    def tick(self):
+        """Nothing to do on the timer"""
 
     def handle(self, event, values):
-        if event == "-TABLE-":
+        if event == sg.WIN_CLOSED:
+            self.result = "closed"
+        elif event == "-LOGOUT-":
+            self.result = "logout"
+        elif event == "-TABLE-":
             self._update_buttons(values)
         elif event == "-REFRESH-":
             self._attempt(self._refresh)
@@ -50,6 +54,7 @@ class SessionController:
             self._attempt(self._join, values)
         elif event == "-DELETE-":
             self._attempt(self._delete, values)
+
 
     def _attempt(self, action, *args):
         """Run an action, showing a message instead of crashing."""

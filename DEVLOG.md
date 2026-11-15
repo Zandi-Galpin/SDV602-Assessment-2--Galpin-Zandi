@@ -53,3 +53,8 @@ MessageRepository: messages belong to a session. blank messages not allowed. ove
 ChatFeed: windowless chat logic that the remote DES can reuse.
 ChatController: redraws only when changes happen. Shows status during database loss of access and clears it when access is back. Keeps the users text in the text box if sending fails.
 added more tests and a switchable "database" that can be turned on and off.
+
+## 15/11/2026
+Multiple DES need to be running in parallel. But FreeSimpleGUI isnt thread safe. Because of this, one loop on the main thread runs every window (WindowManager.) Slower work runs on "worker" thread. Workers never do anything with widgets. Workers post their result back to the window (write_event_value) and the main thread applies it. The session screen now doesnt block, so it can be used while DES windows are open.
+
+Next i need to update the readme, make everything pep8 compliant with autopep8 and do the devlog reflection

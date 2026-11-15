@@ -21,6 +21,7 @@ from tests import test_des, test_local_mode
 from tests.helpers import TEST_DB_NAME, reset_database
 from tests import test_sessions
 from tests import test_chat
+from tests import test_remote
 
 EMPTY_MSG = "Please enter both a username and password."
 
@@ -193,7 +194,7 @@ ALL_TESTS = [
     test_that_the_cli_rejects_bad_input,
 ]
 
-ALL_TESTS += (test_local_mode.ALL_TESTS + test_des.ALL_TESTS + test_sessions.ALL_TESTS + test_chat.ALL_TESTS)
+ALL_TESTS += (test_local_mode.ALL_TESTS + test_des.ALL_TESTS + test_sessions.ALL_TESTS + test_chat.ALL_TESTS + test_remote.ALL_TESTS)
 
 def run_all():
     """Runs each test, catching any problems per test so a bad test doesnt
